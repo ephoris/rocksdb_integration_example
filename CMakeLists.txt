@@ -49,8 +49,9 @@ endif()
 ExternalProject_Add(rocksdb_static_lib
     SOURCE_DIR "${PROJECT_SOURCE_DIR}/extern/rocksdb"
     INSTALL_COMMAND ""
-    USES_TERMINAL_CONFIGURE 1
-    BUILD_COMMAND $(MAKE) DISABLE_WARNING_AS_ERROR=True -C ${PROJECT_SOURCE_DIR}/extern/rocksdb static_lib
+    CONFIGURE_COMMAND ""
+    #     USES_TERMINAL_CONFIGURE 1
+    BUILD_COMMAND $(MAKE) CXX=${CMAKE_CXX_COMPILER} CC=${CMAKE_C_COMPILER} ${ DISABLE_WARNING_AS_ERROR=True -C ${PROJECT_SOURCE_DIR}/extern/rocksdb static_lib
 )
 
 # add a imported library for librocksdb.a
