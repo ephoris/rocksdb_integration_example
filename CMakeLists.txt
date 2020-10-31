@@ -1,4 +1,4 @@
-# Lots of this style is based off of noisepage from CMU
+# Lots of this style is based off of noisepage from CMUA
 # - https://github.com/cmu-db/noisepage/blob/master/CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.16)
@@ -10,6 +10,8 @@ project(demodb
     DESCRIPTION "Example of integratting rocksdb into a C++ project"
     LANGUAGES CXX
 )
+
+set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -44,18 +46,19 @@ endif()
 
 # we use an external project and copy the sources to bin directory to ensure
 # that object files are built outside of the source tree.
-ExternalProject_Add(rocksdb_ext
+ExternalProject_Add(rocksdb_static_lib
     SOURCE_DIR "${PROJECT_SOURCE_DIR}/extern/rocksdb"
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -C ${PROJECT_SOURCE_DIR}/extern/rocksdb static_lib
-    BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
+    USES_TERMINAL_CONFIGURE 1
+    BUILD_COMMAND $(MAKE) DISABLE_WARNING_AS_ERROR=True -C ${PROJECT_SOURCE_DIR}/extern/rocksdb static_lib
 )
 
 # add a imported library for librocksdb.a
 add_library(rocksdb STATIC IMPORTED)
-add_dependencies(rocksdb rocksdb_ext)
-set_property(TARGET rocksdb PROPERTY IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/extern/rocksdb/librocksdb.a")
-target_include_directories(rocksdb SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern/rocksdb/include")
+add_dependencies(rocksdb rocksdb_static_lib)
+set_target_properties(rocksdb PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/extern/rocksdb/librocksdb.a)
+target_include_directories(rocksdb INTERFACE "${PROJECT_SOURCE_DIR}/extern/rocksdb/include")
+# include_directories("${PROJECT_SOURCE_DIR}/extern/rocksdb/include")
 
 # =====================================================================================================================
 # HEADER demodb libraries
@@ -71,18 +74,19 @@ list(REMOVE_ITEM DEMODB_SRCS ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
 add_library(demodb_objlib OBJECT "${DEMODB_SRCS}")
 
-set_target_properties(demodb_objlib PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    CXX_EXTENSIONS OFF
-)
+# set_target_properties(demodb_objlib PROPERTIES
+#     POSITION_INDEPENDENT_CODE ON
+#     CXX_EXTENSIONS OFF
+# )
 
 target_compile_options(demodb_objlib PRIVATE
     "-Werror"
     "-Wall"
 )
 
-target_include_directories(demodb_objlib SYSTEM PUBLIC
+target_include_directories(demodb_objlib PUBLIC
     "${PROJECT_SOURCE_DIR}/src"
+    "${PROJECT_SOURCE_DIR}/extern"
 )
 
 target_link_libraries(demodb_objlib PUBLIC
@@ -92,20 +96,5 @@ target_link_libraries(demodb_objlib PUBLIC
 add_library(demodb_static STATIC $<TARGET_OBJECTS:demodb_objlib>)
 target_link_libraries(demodb_static PUBLIC demodb_objlib)
 
-# =====================================================================================================================
-# HEADER demodb libraries
-# =====================================================================================================================
-
-add_executable(demodb src/main.cpp)
-
-target_compile_options(demodb PRIVATE
-    "-Werror"
-    "-Wall"
-)
-
-target_link_libraries(demodb demodb_static)
-
-set_target_properties(demodb PROPERTIES
-    CXX_EXTENSIONS OFF
-    ENABLE_EXPORTS ON
-)
+add_executable(main ${CMAKE_SOURCE_DIR}/src/main.cpp)
+target_link_libraries(main PUBLIC demodb_objlib rocksdb)
