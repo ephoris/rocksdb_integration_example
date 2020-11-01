@@ -8,7 +8,7 @@ include(ExternalProject)
 project(demodb
     VERSION 1.0
     DESCRIPTION "Example of integratting rocksdb into a C++ project"
-    LANGUAGES CXX
+    LANGUAGES CXX C
 )
 
 set(CMAKE_CXX_STANDARD 11)
