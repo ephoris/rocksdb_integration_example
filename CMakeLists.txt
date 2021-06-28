@@ -50,8 +50,8 @@ ExternalProject_Add(rocksdb_static_lib
     SOURCE_DIR "${PROJECT_SOURCE_DIR}/extern/rocksdb"
     INSTALL_COMMAND ""
     CONFIGURE_COMMAND ""
-    #     USES_TERMINAL_CONFIGURE 1
-    BUILD_COMMAND $(MAKE) CXX=${CMAKE_CXX_COMPILER} CC=${CMAKE_C_COMPILER} DISABLE_WARNING_AS_ERROR=True -C ${PROJECT_SOURCE_DIR}/extern/rocksdb static_lib
+    USES_TERMINAL_CONFIGURE 1
+    BUILD_COMMAND $(MAKE) -C ${PROJECT_SOURCE_DIR}/extern/rocksdb DISABLE_WARNINGS_AS_ERRORS=true static_lib
 )
 
 # add a imported library for librocksdb.a
@@ -75,10 +75,10 @@ list(REMOVE_ITEM DEMODB_SRCS ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
 add_library(demodb_objlib OBJECT "${DEMODB_SRCS}")
 
-# set_target_properties(demodb_objlib PROPERTIES
-#     POSITION_INDEPENDENT_CODE ON
-#     CXX_EXTENSIONS OFF
-# )
+set_target_properties(demodb_objlib PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    CXX_EXTENSIONS OFF
+)
 
 target_compile_options(demodb_objlib PRIVATE
     "-Werror"
